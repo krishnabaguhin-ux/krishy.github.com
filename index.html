@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Simulated Terminal - School Demo</title>
+<style>
+  body{
+    margin:0;
+    height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:#030404;
+    font-family: "Source Code Pro", Consolas, monospace;
+    color:#00ff6a;
+  }
+  .terminal{
+    width:92%;
+    max-width:900px;
+    background:#00110b;
+    border-radius:8px;
+    padding:20px;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.7);
+    border: 1px solid rgba(0,255,106,0.06);
+  }
+  .title{
+    font-size:14px;
+    color:#9fffc9;
+    margin-bottom:12px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+  }
+  .screen{
+    background:linear-gradient(180deg, rgba(0,0,0,0.15), rgba(0,0,0,0.05));
+    padding:16px;
+    border-radius:6px;
+    min-height:260px;
+    overflow:auto;
+    box-shadow: inset 0 -6px 30px rgba(0,0,0,0.6);
+  }
+  .line{
+    font-size:16px;
+    line-height:1.6;
+    white-space:pre-wrap;
+    word-break:break-word;
+  }
+  .cursor{
+    display:inline-block;
+    width:9px;
+    height:18px;
+    background:#00ff6a;
+    margin-left:6px;
+    vertical-align:middle;
+    animation: blink 1s steps(2) infinite;
+  }
+  @keyframes blink{50%{opacity:0}}
+  .progress{
+    margin-top:8px;
+    background:rgba(0,255,106,0.07);
+    border-radius:6px;
+    overflow:hidden;
+    height:14px;
+    width:100%;
+  }
+  .progress .bar{
+    height:100%;
+    width:0%;
+    background:linear-gradient(90deg,#00ff6a,#34ff9a);
+    transition:width 120ms linear;
+    box-shadow: inset 0 -4px 10px rgba(0,0,0,0.4);
+  }
+  .small{
+    font-size:13px;
+    color:#a8ffc6;
+    margin-top:6px;
+  }
+  .controls{
+    margin-top:14px;
+    display:flex;
+    gap:8px;
+  }
+  button{
+    background:transparent;
+    border:1px solid rgba(0,255,106,0.12);
+    color:#9fffc9;
+    padding:8px 12px;
+    border-radius:6px;
+    cursor:pointer;
+  }
+  button:hover{background:rgba(0,255,106,0.02)}
+  .note{
+    margin-top:10px;
+    color:#86f2b1;
+    font-size:13px;
+  }
+</style>
+</head>
+<body>
+  <div class="terminal">
+    <div class="title">
+      <div>Simulated Terminal •</div>
+      <div style="font-size:12px;color:#7fffb5">FOR YOUR SAFETY</div>
+    </div>
+
+    <div class="screen" id="screen">
+      <!-- dynamic lines go here -->
+    </div>
+
+    <div class="controls">
+      <button id="startBtn">Start Simulation</button>
+      <button id="resetBtn">Reset</button>
+      <button id="fastBtn">Fast Mode</button>
+    </div>
+    <div class="note">Tip: Sorry na Hack kana.</div>
+  </div>
+
+<script>
+  // CONFIG: list of fake targets and labels (you can change)
+  const steps = [
+    {label: "Hacking Facebook", sub: "Connecting to api.facebook.com", duration: 2200},
+    {label: "Hacking Gmail", sub: "Bypassing oauth (simulated)", duration: 2400},
+    {label: "Hacking Instagram", sub: "Enumerating sessions", duration: 2000},
+    {label: "Hacking My Loading", sub: "Sending simulated payload", duration: 1800},
+  ];
+
+  const screen = document.getElementById('screen');
+  const startBtn = document.getElementById('startBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  const fastBtn = document.getElementById('fastBtn');
+
+  let running = false;
+  let fast = false;
+  let currentTimeouts = [];
+
+  function clearTimers(){
+    currentTimeouts.forEach(t => clearTimeout(t));
+    currentTimeouts = [];
+  }
+
+  function appendLine(text, cls){
+    const d = document.createElement('div');
+    d.className = 'line ' + (cls||'');
+    d.textContent = text;
+    screen.appendChild(d);
+    screen.scrollTop = screen.scrollHeight;
+    return d;
+  }
+
+  // type text char-by-char (visual only)
+  function typeText(container, text, speed = 25){
+    return new Promise(resolve=>{
+      container.textContent = "";
+      const cursor = document.createElement('span');
+      cursor.className = 'cursor';
+      container.appendChild(cursor);
+      let i=0;
+      function step(){
+        if(i < text.length){
+          cursor.insertAdjacentText('beforebegin', text[i]);
+          i++;
+          const t = setTimeout(step, fast ? Math.max(8, speed/4) : speed);
+          currentTimeouts.push(t);
+        } else {
+          cursor.remove();
+          resolve();
+        }
+      }
+      step();
+    });
+  }
+
+  // show a fake progress bar from 0 to 100
+  function fakeProgress(container, totalDuration = 1500){
+    return new Promise(resolve=>{
+      const wrap = document.createElement('div');
+      wrap.className = 'progress';
+      const bar = document.createElement('div');
+      bar.className = 'bar';
+      wrap.appendChild(bar);
+      screen.appendChild(wrap);
+      const percentText = document.createElement('div');
+      percentText.className = 'small';
+      percentText.textContent = '0%';
+      screen.appendChild(percentText);
+      screen.scrollTop = screen.scrollHeight;
+
+      const start = Date.now();
+      const end = start + (fast ? Math.max(300, totalDuration/3) : totalDuration);
+      function step(){
+        const now = Date.now();
+        const p = Math.min(100, Math.floor((now - start) / (end - start) * 100));
+        bar.style.width = p + '%';
+        percentText.textContent = p + '%';
+        if(p >= 100){
+          resolve();
+        } else {
+          const t = setTimeout(step, 80);
+          currentTimeouts.push(t);
+        }
+      }
+      step();
+    });
+  }
+
+  async function runSimulation(){
+    if(running) return;
+    running = true;
+    startBtn.disabled = true;
+    appendLine("Starting simulated terminal...", "");
+    appendLine("Note: This is only a visual simulation. No network or account access performed.", "small");
+    for(let i=0;i<steps.length && running;i++){
+      const s = steps[i];
+      const line = appendLine("> " + s.label);
+      await typeText(line, "> " + s.label, 20);
+      appendLine("→ " + s.sub, "small");
+      await fakeProgress(null, s.duration);
+      appendLine("Status: OK (simulated)\n", "small");
+      // small pause between steps
+      await new Promise(res => {
+        const t = setTimeout(res, fast ? 150 : 450);
+        currentTimeouts.push(t);
+      });
+    }
+    if(running) appendLine("Simulation complete. All tasks finished (simulated).", "");
+    running = false;
+    startBtn.disabled = false;
+  }
+
+  startBtn.addEventListener('click', runSimulation);
+
+  resetBtn.addEventListener('click', ()=>{
+    clearTimers();
+    running = false;
+    startBtn.disabled = false;
+    screen.innerHTML = '';
+  });
+
+  fastBtn.addEventListener('click', ()=>{
+    fast = !fast;
+    fastBtn.textContent = fast ? "Fast Mode: ON" : "Fast Mode";
+    fastBtn.style.opacity = fast ? '0.9' : '1';
+  });
+
+  // optional: auto-start for demo
+  // setTimeout(runSimulation, 800);
+</script>
+</body>
+</html>

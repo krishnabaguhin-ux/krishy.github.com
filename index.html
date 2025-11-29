@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="tl">
+<head>
+  <meta charset="UTF-8">
+  <title>Mahal Mo Ba Ako?</title>
+  <style>
+    body {
+      background: #0f172a;
+      color: white;
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding-top: 100px;
+    }
+
+    h1 {
+      font-size: 32px;
+      margin-bottom: 40px;
+    }
+
+    button {
+      padding: 12px 30px;
+      font-size: 18px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      position: relative;
+    }
+
+    #yesBtn {
+      background: #22c55e;
+      color: black;
+      position: absolute;
+    }
+
+    #noBtn {
+      background: #ef4444;
+      color: white;
+      margin-left: 150px;
+    }
+
+    #message {
+      margin-top: 40px;
+      font-size: 22px;
+      color: #facc15;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>💘 Mahal mo ba ako? 💘</h1>
+
+  <button id="yesBtn">YES</button>
+  <button id="noBtn" onclick="noClick()">NO</button>
+
+  <div id="message"></div>
+
+  <script>
+    const yesBtn = document.getElementById("yesBtn");
+
+    yesBtn.addEventListener("mouseenter", moveYes);
+
+    function moveYes() {
+      const x = Math.random() * (window.innerWidth - 100);
+      const y = Math.random() * (window.innerHeight - 100);
+
+      yesBtn.style.left = x + "px";
+      yesBtn.style.top = y + "px";
+    }
+
+    function noClick() {
+      document.getElementById("message").innerText =
+        "Ah di mo pala ako mahal eh 💔";
+    }
+  </script>
+
+</body>
+  </html>
